@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Income distributions by group memeber chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Income Distribution by Group Members</h5>
+                            <p class="card-text">Select Month: <input type="month" id="incomeDistributionsByMemberPicker"></p>
+                            <canvas id="incomeDistributionChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const incomeDistributionsByMemberPicker = document.getElementById('incomeDistributionsByMemberPicker');
+            const ctx = document.getElementById('incomeDistributionChart');
+            const incomeDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], 
+                    datasets: [{
+                        label: 'Income Distribution',
+                        data: [], 
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            // Function to fetch and update data from backend
+            function fetchDataAndUpdateChart(year, month) {
+                $.ajax({
+                    url: `/get_5_income_distribution_group_data/${group_id}/${year}/${month}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.length === 0) {
+                            // Handle case of no data 
+                            incomeDistributionChart.data.labels = ['No Data'];
+                            incomeDistributionChart.data.datasets[0].data = [0];
+                        } else {
+                            // If data, update chart labels and datapoints
+                            const labels = data.map(item => item.user); 
+                            const dataPoints = data.map(item => item.total_income); 
+                            incomeDistributionChart.data.labels = labels;
+                            incomeDistributionChart.data.datasets[0].data = dataPoints;
+                        }
+    
+                        // Update chart
+                        incomeDistributionChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+    
+            // Set initial picker value for current month and year
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; 
+            incomeDistributionsByMemberPicker.value = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+            fetchDataAndUpdateChart(currentYear, currentMonth);
+    
+            // If picker changes, get data for selected month and year
+            incomeDistributionsByMemberPicker.addEventListener('change', function () {
+                const selectedValue = incomeDistributionsByMemberPicker.value;
+                const [selectedYear, selectedMonth] = selectedValue.split('-');
+                fetchDataAndUpdateChart(selectedYear, selectedMonth);
+            });
+        });
+    </script>
+    
+    
+    
+</body>
+</html>

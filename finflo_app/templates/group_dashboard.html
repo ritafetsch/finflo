@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Group Dashboard</title>
+    <!-- Font awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Toastr JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+    
+    <style>
+        /* Custom styles for sticky add transaction button  */
+        .sticky-button-container {
+            position: fixed;
+            bottom: 0;
+            right: 20px; 
+            background-color: rgba(252,159,179,255); 
+            padding: 10px;
+            padding-top: 0px;
+            padding-bottom: 0px;
+            border-top-left-radius: 25px; 
+            border-top-right-radius: 25px; 
+            z-index: 999; 
+        }
+        .btn-transparent {
+            background-color: transparent; 
+            border: none; 
+        }
+        .text-white {
+            color: white; 
+        }
+        .plus-sign {
+            font-size: 36px;
+            border: none; 
+        }
+        .btn-transparent:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        /* Update size on boostrap font styling */
+        .custom-heading {
+            font-size: 2.5rem; 
+        }
+    </style>
+</head>
+<body>
+    <!-- Nav section - same across all pages containing nav -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'group_dashboard' group_id=group_id %}">
+            <!-- Logo -->
+            <i class="fa-brands fa-codepen"></i>          
+            Finflo
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#expand-content" aria-controls="expand-content" aria-expanded="false" aria-label="Toggle navigation">
+            ☰
+        </button>
+        <div class="collapse navbar-collapse" id="expand-content">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'group_dashboard' group_id=group_id %}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'transactions' group_id=group_id %}">Transactions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'reports' group_id=group_id %}">Reports</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'groups' group_id=group_id %}">Groups</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'manage_categories' group_id=group_id %}">Categories</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa-solid fa-user"></i> 
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                        <a class="dropdown-item" href="{% url 'settings' group_id=group_id %}">Settings</a>
+                        <a class="dropdown-item" href="{% url 'logout' %}">Logout</a> 
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <!-- Page heading -->
+    <div class="container mt-4 " style="max-width: 800px; margin: 0 auto;">
+        <h1 class="mb-3 display-4 custom-heading">Dashboard - <strong>{{ group.name }}</strong></h1>
+        <!-- Display current month -->
+        <p>Current Month: {{ current_month }}</p>
+    </div>
+
+    <div class="container mt-4 ">
+        <!-- Transaction modal button-->
+        <div class="sticky-button-container">
+            <button type="button" class="btn btn-transparent text-white rounded-circle" data-toggle="modal" data-target="#addTransactionModal">
+                <span class="plus-sign">+</span>
+            </button>
+        </div>
+        <!-- Add Transaction Modal -->
+        <div class="modal fade" id="addTransactionModal" tabindex="-1" role="dialog" aria-labelledby="addTransactionModalLabel" aria-hidden="true"  >
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTransactionModalLabel">Add New Transaction</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Form for user to enter new transaction details -->
+                        <form id="addTransactionForm">
+                            {% csrf_token %}
+                            <!-- Description -->
+                            <div class="form-group {% if form.description.errors %}has-error{% endif %}" id="description-field">
+                                <label for="{{ form.description.id_for_label }}">Description:</label>
+                                <input type="text" name="description" class="form-control" required>
+                                {% if form.description.errors %}
+                                    <span class="help-block">{{ form.description.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                             <!-- Amount -->
+                            <div class="form-group {% if form.amount.errors %}has-error{% endif %}" id="amount-field">
+                                <label for="{{ form.amount.id_for_label }}">Amount:</label>
+                                <input type="number" name="amount" class="form-control" required step="0.01" id="amount-input">
+                                <div id="amount-validation-message" style="color: red; display: none;">This field is necessary.</div>
+                                {% if form.amount.errors %}
+                                    <span class="help-block">{{ form.amount.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                            <!-- Currency -->
+                            <div class="form-group " id="currency-field">
+                                <label for="currency">Currency:</label>
+                                <select name="currency" class="form-control" required>
+                                    {% for currency in currencies %}
+                                        <option value="{{ currency.currency_id }}"
+                                            {% if currency.currency_id == group.default_currency_id %}selected{% endif %}>
+                                            {{ currency.name }} ({{ currency.symbol }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span> 
+                            </div>
+                            <!-- Date -->
+                            <div class="form-group " id="transactionDate-field">
+                                <label for="date">Date:</label>
+                                <input type="date" name="date" id="transactionDate" class="form-control" required value="{{ today }}">
+                                <span class="help-block"></span> 
+                            </div>
+                            <!-- Recurring -->
+                            <div class="form-group " id="isRecurringToggle-field">
+                                <label>Recurring:</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="isRecurringToggle" name="is_recurring">
+                                    <label class="custom-control-label" for="isRecurringToggle"></label>
+                                </div>
+                                <span class="help-block"></span> 
+                            </div>
+                            <div id="recurringOptions" style="display: none;">
+                                <label>Recurrence Pattern:</label>
+                                <select name="recurrence_pattern" id="recurrencePattern" class="form-control">
+                                    <option value="once">One-time</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <!-- Category -->
+                            <div class="form-group " id="category-field">
+                                <label for="category">Category:</label>
+                                <select name="category" class="form-control" required>
+                                    {% for category in categories %}
+                                        <option value="{{ category.category_id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span> 
+                            </div>
+                            <!-- Type -->
+                            <div class="form-group " id="type-field">
+                                <label for="type">Type:</label>
+                                <select name="type" class="form-control" required>
+                                    <option value="income">Income</option>
+                                    <option value="expense">Expense</option>
+                                </select>
+                                <span class="help-block"></span> 
+                            </div>
+                            <!-- Error messages container -->
+                            <div id="errorMessages" class="alert alert-danger" style="display: none;"></div>
+                            <button type="button" class="btn btn-primary" id="saveTransactionButton">Save Transaction</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- SUMMARIES SECTION -->
+    <div class="container mt-4 ">
+        <!-- Summaries Section -->
+        <section class="rounded bg-light p-4 mb-4" style="max-width: 800px; margin: 0 auto;">
+            <div class="row align-items-stretch">
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Monthly Income Summary -->
+                            <div class="border p-3 mb-3 rounded summary-box">
+                                <h3>Monthly Income</h3>
+                                <!-- Income chart -->
+                                <canvas id="incomeChart" style="width: 300px; height: 300px;"></canvas>
+                                <!-- Get data from backend -->
+                                <p class="total">Total: {{ group.default_currency.symbol }}{{ total_income|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Monthly Expense Summary -->
+                            <div class="border p-3 mb-3 rounded">
+                                <h3>Monthly Expense</h3>
+                                <!-- Expense chart -->
+                                <canvas id="expenseChart" width="300" height="200"></canvas>
+                                <!-- Get data from backend -->
+                                <p>Total: {{ group.default_currency.symbol }}{{ total_expense|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <!-- Monthly Balance -->
+                            <div class="border p-3 mb-3 rounded">
+                                <h3>Monthly Balance</h3>
+                                <div class="d-flex justify-content-end align-items-center">
+                                    <!-- Monthly balance data from backend -->
+                                    <span style="font-size: 24px; font-weight: bold;">{{ group.default_currency.symbol }}{{ monthly_balance|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                   
+                </div>
+                <div class="col-md-4 d-flex flex-column">
+                    <!-- Income vs Expense Chart -->
+                    <div class="border p-3 flex-grow-1 rounded">
+                        <h3>Income vs Expense</h3>
+                        <!-- Income vs expense chart - data from elements above -->
+                        <canvas id="incomeVsExpenseChart" width="400" height="400"
+                                data-total-income="{{ total_income }}"
+                                data-total-expense="{{ total_expense }}"></canvas>
+                    </div>
+                </div>
+                
+        </section>
+
+        <!-- TOTALS SECTION -->
+
+        <!-- Variable Monthly Expenses Section -->
+        <section class="rounded bg-light p-4 mb-4 " style="max-width: 800px; margin: 0 auto;">
+            <h5>VARIABLE MONTHLY EXPENSES</h5>
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="list-group">
+                        <!-- Loop through variable expense tuple data from backend -->
+                        {% for label, data in variable_expense_data_tuples %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ label }}
+                            <span class="text-dark">
+                                {{ group.default_currency.symbol }}{{ data|floatformat:2 }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between">
+                        <h4>TOTAL VARIABLE EXPENSES</h4>
+                        <h3 class="font-weight-bold text-primary total-amount mt-3">
+                            <!-- Get total variable expenses from backend -->
+                            {{ group.default_currency.symbol }}{{ total_variable_expenses|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fixed Monthly Expenses Section -->
+        <section class="rounded bg-light p-4 mb-4" style="max-width: 800px; margin: 0 auto;">
+            <h5>FIXED MONTHLY EXPENSES</h5>
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="list-group">
+                        <!-- Loop through fixed expenses fetched from backend -->
+                        {% for label, data in fixed_expenses %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ label }}
+                            <span class="text-dark">
+                                {{ group.default_currency.symbol }}{{ data|floatformat:2 }}
+                            </span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between">
+                        <h4>TOTAL FIXED BILLS</h4>
+                        <h3 class="font-weight-bold text-primary total-amount mt-3">
+                            <!-- Get total fixed expenses -->
+                            {{ group.default_currency.symbol }}{{ total_fixed_expenses|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monthly Net Income Section -->
+        <section class="rounded bg-light p-4 mb-4" style="max-width: 800px; margin: 0 auto;">
+            <h5>MONTHLY NET INCOME</h5>
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="list-group">
+                        <!-- Loop through income transactions from backend -->
+                        {% for category, amount in income_grouped %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ category }}
+                            <span class="text-dark">
+                                {{ group.default_currency.symbol }}{{ amount|floatformat:2 }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between">
+                        <h4>TOTAL MONTHLY INCOME</h4>
+                        <h3 class="font-weight-bold text-primary total-amount mt-3">
+                            <!-- Get total income -->
+                            {{ group.default_currency.symbol }}{{ total_income|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+<script>
+    // Toastr notification in top right
+    toastr.options = {
+        closeButton: true, 
+        positionClass: 'toast-top-right', 
+    };
+
+    // ADD TRANSACTION MODAL JAVASCRIPT
+    $(document).ready(function() {
+
+        // Show toggle options if toggle is checked
+        $('#isRecurringToggle').change(function() {
+            if ($(this).is(':checked')) {
+                $('#recurringOptions').show();
+            } else {
+                $('#recurringOptions').hide();
+            }
+        });
+        // Set value of date input to today's date
+        var currentDateTime = new Date();
+        // YYYY-MM-DD
+        var todayDate = currentDateTime.toISOString().slice(0, 10); 
+        $('#transactionDate').val(todayDate);
+        $('#transactionDate').attr('max', todayDate);
+        var initialDate = todayDate;
+
+        // Handle form submission
+        $('#saveTransactionButton').on('click', function() {
+            // Handle case where amount is empty
+            var amount = $('#amount-input').val();
+            var amountValidationMessage = $('#amount-validation-message');
+            if (amount.trim() === "") {
+                amountValidationMessage.show();
+                return; 
+            } else {
+                amountValidationMessage.hide();
+            }
+            // Serialize form data
+            var formData = $('#addTransactionForm').serialize();
+            // Get group id from context
+            var groupId = "{{ group_id }}"; 
+
+            // Check if the selected date is today's date
+            var selectedDate = $('#transactionDate').val();
+            var currentDate = new Date().toISOString().slice(0, 10); 
+            // If so, append time to transaction data for metadata on backend 
+            if (selectedDate === currentDate) {
+                var currentTime = new Date().toTimeString().split(' ')[0]; 
+                selectedDate += ' ' + currentTime;
+                // Otherwise set transaction time to midnight 
+            } else {
+                selectedDate += ' 00:00:00';
+            }
+
+            // Append selected date and group id to form data 
+            formData += '&group_id=' + groupId;
+            formData += '&date=' + selectedDate;
+
+            // Ajax post request to add_transaction endpoint with form data
+            $.ajax({
+                type: 'POST',
+                url: '{% url "add_transaction" %}',
+                data: formData,
+                success: function(response) {
+                    if (response.errors) {
+                        console.log("Backend Errors:", response.errors);
+                    } else {
+                        // If successful close modal and show toastr success message
+                        $('#addTransactionModal').modal('hide');
+                        toastr.success('Transaction added successfully');
+                        // Delay screen refresh for toastr message to take effect 
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000); 
+                    }
+                },
+                error: function(response) {
+                    // If error with ajax request
+                    if (response.responseJSON && response.responseJSON.errors) {
+                        var errors = JSON.parse(response.responseJSON.errors);
+                        var errorMessages = [];
+                        // Iterate through errors getting them on backend
+                        $.each(errors, function(field, messages) {
+                            errorMessages.push(messages.map(function(message) {
+                                return message.message;
+                            }).join(', ')); 
+                        });
+                        // Display error messages in the error div
+                        var errorDiv = $('#errorMessages');
+                        errorDiv.html("Please fill out all required fields.");
+                        errorDiv.show(); 
+
+                    } else {
+                        // Else display generic error message
+                        var errorDiv = $('#errorMessages');
+                        errorDiv.html("An error occurred while saving the transaction.");
+                        errorDiv.show(); 
+                    }
+                }
+            });
+        });
+        // Hide missing field message on input and when modal closed
+        $('#amount-input').on('input', function() {
+            $('#amount-validation-message').hide();
+        });
+        $('#addTransactionModal').on('hidden.bs.modal', function () {
+            $('#amount-validation-message').hide();
+        });
+        // Update initialDate when user picks a new one
+        $('#transactionDate').on('change', function() {
+            initialDate = $('#transactionDate').val();
+        });
+    });
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        // Populate category dropdown with categories in categories variable from backend
+        function populateCategories(categories) {
+            var categoryDropdown = $('[name="category"]');
+            categoryDropdown.empty(); 
+            categories.forEach(function(category) {
+                // Append new option for each category
+                categoryDropdown.append($('<option>', {
+                    value: category.category_id,
+                    text: category.name
+                }));
+            });
+        }
+        $.ajax({
+            type: 'GET',
+            url: '/get_categories/{{ group_id }}/', 
+            success: function(response) {
+                // Popualte if ajax call is successfull
+                if (response.categories) {
+                    populateCategories(response.categories);
+                }
+            },
+            error: function(response) {
+                console.log("Backend Errors:", response.errors);
+            }
+        });
+        // Set type dropdown to expense by default
+        $('select[name="type"]').val('expense');
+    });
+</script>
+
+<!-- TOP THREE CHARTS JAVASCRIPT -->
+<script>
+    // Define and initialise datat for income chart 
+    const incomeChartCanvas = document.getElementById('incomeChart');
+    const incomePieData = JSON.parse('{{ income_pie_data|escapejs|safe }}');
+    // Initially define with no data
+    let incomeChart = new Chart(incomeChartCanvas, {
+        type: 'pie',
+        data: {
+            labels: ['No data'], 
+            datasets: [{
+                data: [1], 
+                backgroundColor: ['rgba(0, 0, 0, 0.2)'], 
+            }],
+        },
+        options: {
+            maintainAspectRatio: true,
+            responsive: true,
+        },
+    });
+    // If data, update with data
+    if (incomePieData.length > 0) {
+        const labels = incomePieData.map(data => data.label);
+        const dataValues = incomePieData.map(data => data.data);
+        // Colors for different segments 
+        const backgroundColors = [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 205, 86, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+            'rgba(0, 128, 0, 0.6)',
+            'rgba(255, 0, 0, 0.6)',
+            'rgba(128, 0, 128, 0.6)',
+            'rgba(255, 192, 203, 0.6)',
+            'rgba(0, 0, 255, 0.6)',
+            'rgba(255, 0, 255, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+        ];
+        incomeChart.data.labels = labels;
+        incomeChart.data.datasets[0].data = dataValues;
+        incomeChart.data.datasets[0].backgroundColor = backgroundColors;
+    }
+    incomeChart.update();
+
+    
+    // Define and initialise datat for income chart 
+    const expenseChartCanvas = document.getElementById('expenseChart');
+    const expensePieData = JSON.parse('{{ expense_pie_data|escapejs|safe }}');
+    // Initially define with no data
+    let expenseChart = new Chart(expenseChartCanvas, {
+        type: 'pie',
+        data: {
+            labels: ['No data'], 
+            datasets: [{
+                data: [1], 
+                backgroundColor: ['rgba(0, 0, 0, 0.2)'], 
+            }],
+        },
+        options: {
+            maintainAspectRatio: true,
+            responsive: true,
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        if (tooltipItem.index === 0) {
+                            return 'No Data'; 
+                        }
+                        return ''; 
+                    },
+                },
+            },
+        },
+    });
+
+    // Else, if there is data, update chart
+    if (expensePieData.length > 0) {
+        const labels = expensePieData.map(data => data.label);
+        const dataValues = expensePieData.map(data => data.data);
+        // Colors array for chart segments
+        const backgroundColors = [
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 205, 86, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+            'rgba(0, 128, 0, 0.6)',
+            'rgba(255, 0, 0, 0.6)',
+            'rgba(128, 0, 128, 0.6)',
+            'rgba(255, 192, 203, 0.6)',
+            'rgba(0, 0, 255, 0.6)',
+            'rgba(255, 0, 255, 0.6)',
+        ];
+        expenseChart.data.labels = labels;
+        expenseChart.data.datasets[0].data = dataValues;
+        expenseChart.data.datasets[0].backgroundColor = backgroundColors;
+    }
+    expenseChart.update();
+
+    // Define and initialise data for income vs expense chart 
+    const incomeVsExpenseChartCanvas = document.getElementById('incomeVsExpenseChart');
+    const totalIncome = parseFloat(incomeVsExpenseChartCanvas.getAttribute('data-total-income'));
+    const totalExpense = parseFloat(incomeVsExpenseChartCanvas.getAttribute('data-total-expense'));
+
+    let incomeVsExpenseChart;
+    // If both income and expense data is 0, initilise no data chart
+    if (totalIncome === 0 & totalExpense === 0) {
+        incomeVsExpenseChart = new Chart(incomeVsExpenseChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['No data'], 
+                datasets: [{
+                    data: [1], 
+                    backgroundColor: ['rgba(0, 0, 0, 0.2)'], 
+                }],
+            },
+            options: {
+                maintainAspectRatio: true,
+                responsive: true,
+                tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        if (tooltipItem.index === 0) {
+                            return 'No Data'; 
+                        }
+                        return '';
+                    },
+                },
+            },
+            },
+        });
+    
+    // Else if there's data being returned for either income or expense, update with data
+    } else {
+        incomeVsExpenseChart = new Chart(incomeVsExpenseChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Total Income', 'Total Expense'],
+                datasets: [{
+                    data: [totalIncome, totalExpense],
+                    backgroundColor: [
+                        'rgba(255, 205, 86, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(128, 0, 128, 0.6)',
+                        'rgba(0, 128, 0, 0.6)',
+                        'rgba(128, 0, 128, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                    ],
+                }],
+            },
+            options: {
+                maintainAspectRatio: true,
+                responsive: true,
+            },
+        });
+
+    }
+    incomeVsExpenseChart.update();
+</script>
+
+        
+</body>
+</html>

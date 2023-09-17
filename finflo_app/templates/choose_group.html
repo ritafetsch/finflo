@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose a Group</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS styling for hovering over group card -->
+    <style>
+        .card:hover {
+            transform: scale(1.05); 
+            transition: transform 0.3s ease;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); 
+        }
+    </style>
+</head>
+<body>
+    <!-- Group card template -->
+    <div class="container mt-5">
+        <!-- Page heading and direction for choosing account  -->
+        <h1 class="mb-3 display-4 custom-heading">Choose a Group</h1>
+        <p class="text-muted pb-4">You do not currently have a default group account. The group you choose will become your default group account. You can update your default group account in your settings.</p>
+        <!-- Render card for each group in groups - fetched from backend  -->
+        <div class="row">
+            {% for group in groups %}
+                <div class="col-md-4 mb-4">
+                    <a href="{% url 'select_default_group' group.id %}"  style="text-decoration: none; color: inherit;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ group.name }}</h5>
+                                <!-- List memebers in group -->
+                                <p class="card-text">Members:</p>
+                                <ul class="list-group">
+                                    {% for member in group.members.all %}
+                                        <li class="list-group-item">{{ member.username }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

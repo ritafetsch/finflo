@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Monthly expense trends chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Monthly Expense Trends</h5>
+                        <p class="card-text">Select Year: <input type="number" id="monthlyExpenseTrendsPicker" min="YYYY" max="YYYY" step="1" placeholder="YYYY" value="2023" style="width: 160px;"></p>
+                        <canvas id="monthlyExpenseTrendsChart" width="1200" height="600"></canvas> 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            const monthlyExpenseTrendsPicker = document.getElementById('monthlyExpenseTrendsPicker');
+            const monthlyExpenseChart = new Chart('monthlyExpenseTrendsChart', {
+                type: 'line',
+                data: {
+                    labels: [],  
+                    datasets: [{
+                        label: 'Monthly Expenses',
+                        data: [],   
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        fill: true,
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+            // Function to fetch and update data from backend 
+            function fetchAndUpdateData(year) {
+                var group_id = {{ group_id }};
+                $.ajax({
+                    url: `/get_1_monthly_expense_data/${group_id}/${year}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        console.log('Response Data:', data);
+
+                        if (data.length === 0) {
+                            // If no data is returned, set a label like "No data"
+                            monthlyExpenseChart.data.labels = ['No data'];
+                            monthlyExpenseChart.data.datasets[0].data = [0];
+                        } else {
+                            // Get labels and data from response
+                            const labels = data.map(item => item.label);
+                            const dataPoints = data.map(item => item.data);
+
+                            // Set each month to 0 to start
+                            const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            const monthlyData = Array(allMonths.length).fill(0);
+
+                            // Populate months array with data
+                            labels.forEach((label, index) => {
+                                const monthIndex = allMonths.indexOf(label);
+                                if (monthIndex !== -1) {
+                                    monthlyData[monthIndex] = dataPoints[index];
+                                }
+                            });
+                            // Update chart data
+                            monthlyExpenseChart.data.labels = allMonths;
+                            monthlyExpenseChart.data.datasets[0].data = monthlyData;
+                        }
+                        // Apply changes
+                        monthlyExpenseChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+            // Set picker's initial value to current year
+            const currentYear = new Date().getFullYear();
+            monthlyExpenseTrendsPicker.value = currentYear;
+            fetchAndUpdateData(currentYear);
+
+            // If picker changes, fetch and update data for chosen year
+            monthlyExpenseTrendsPicker.addEventListener('change', function () {
+                const selectedYear = monthlyExpenseTrendsPicker.value;
+                console.log('Selected Year:', selectedYear);
+                fetchAndUpdateData(selectedYear);
+            });
+        });
+    </script> 
+</body>
+</html>

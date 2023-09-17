@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Category wise monthly comparison chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div  class="card-link">
+                    <div class="card mb-4">
+                        <div class="card-body d-flex flex-column flex-fill">
+                            <h5 class="card-title">Category-wise Monthly Comparison</h5>
+                            <p class="card-text">Select Year: <input type="number" id="categoryWiseMonthlyPicker" min="YYYY" max="YYYY" step="1" placeholder="YYYY" value="2023" style="width: 160px;"></p>
+                            <canvas id="categoryMonthlyComparisonChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Function to get random color for category lines
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+            // Define and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const categoryWiseMonthlyPicker = document.getElementById('categoryWiseMonthlyPicker');
+            const ctx = document.getElementById('categoryMonthlyComparisonChart');
+            const categoryMonthlyComparisonChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+
+            // Function to fetch data from backend and update chart
+            function fetchAndUpdateData(year) {
+                $.ajax({
+                    url: `/get_9_category_wise_monthly_comparison_data/${group_id}/${year}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        console.log('Response Data:', data);
+
+                        // Handle case of no data with no data labels
+                        if (data.categories.length === 0) {
+                            
+                            categoryMonthlyComparisonChart.data.labels = ['No Data'];
+                            categoryMonthlyComparisonChart.data.datasets = [];
+                        } else {
+                            // Else if data, update chart with it
+                            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            const datasets = data.categories.map((category, index) => ({
+                                label: category,
+                                data: data.data[index],
+                                borderColor: getRandomColor(),
+                                borderWidth: 1,
+                                fill: false,
+                            }));
+                            categoryMonthlyComparisonChart.data.labels = labels;
+                            categoryMonthlyComparisonChart.data.datasets = datasets;
+                        }
+                        categoryMonthlyComparisonChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+
+            // Set initial picker value for current year
+            const currentYear = new Date().getFullYear();
+            categoryWiseMonthlyPicker.value = currentYear;
+            fetchAndUpdateData(currentYear);
+        
+            // If picker changes, get data for selected  year
+            categoryWiseMonthlyPicker.addEventListener('change', function () {
+                const selectedYear = categoryWiseMonthlyPicker.value;
+                console.log('Selected Year:', selectedYear);
+                fetchAndUpdateData(selectedYear);
+            });
+        });
+    </script>
+
+    
+</body>
+</html>

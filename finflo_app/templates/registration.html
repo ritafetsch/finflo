@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jquery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <!-- SweetAlert JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+</head>
+<body>
+    <!-- Registration form container -->
+    <div class="container mt-5">
+        <h1 class="display-4">User Registration</h1>
+        <form method="post" action="{% url 'registration' %}">
+            {% csrf_token %}
+            <!-- First name -->
+            <div class="form-group">
+                <label for="first_name">First name:</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" required>
+            </div>
+            <!-- Last name -->
+            <div class="form-group">
+                <label for="last_name">Last name:</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" required>
+            </div>
+            <!-- Username -->
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <!-- Password -->
+            <div class="form-group">
+                <label for="password1">Password:</label>
+                <input type="password" class="form-control" id="password1" name="password1" required>
+            </div>
+            <!-- Password confirmation -->
+            <div class="form-group">
+                <label for="password2">Password confirmation:</label>
+                <input type="password" class="form-control" id="password2" name="password2" required>
+            </div>
+            <div id="messages"></div>
+            <button type="button" class="btn btn-primary" id="register-button">Register</button>
+        </form>
+        <!-- Link to login -->
+        <p class="mt-3">Already have an account? <a href="{% url 'login_view' %}" class="btn btn-link">Login</a></p>
+    </div>
+
+    <script>
+        var csrfToken = "{{ csrf_token }}";
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Template function for displaying different swal messages 
+            function displayMessage(title, text, icon) {
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonColor: '#007bff', 
+                });
+            }
+            // Register enter as submission button on all fields 
+            $('#first_name, #last_name, #username, #email, #password1, #password2').keypress(function(event) {
+            if (event.which === 13) { 
+                // Prevent default form submission
+                event.preventDefault(); 
+                // Trigger click event of register button
+                $('#register-button').click(); 
+            }
+        });
+            // Register button click event
+            $('#register-button').click(function() {
+                // Get values from form fields
+                var first_name = $('#first_name').val();
+                var last_name = $('#last_name').val();
+                var username = $('#username').val();
+                var email = $('#email').val();
+                var password1 = $('#password1').val();
+                var password2 = $('#password2').val();
+
+                // Construct formData
+                var formData = {
+                    csrfmiddlewaretoken: csrfToken,
+                    first_name: first_name,
+                    last_name: last_name,
+                    username: username,
+                    email: email,
+                    password1: password1,
+                    password2: password2,
+                };
+                // Ajax request to register_user endpoint on back end sending in form data
+                $.ajax({
+                    url: '{% url "register_user" %}', 
+                    method: 'POST',
+                    data: formData,
+                    success: function(data) {
+                        // If successful, show swal success message
+                        if (data.success) {
+                            Swal.fire({
+                            title: 'Success',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#007bff',
+                        }).then(function() {
+                            // Then redirect the user to the landing page 
+                            window.location.href = '{% url "landing_page" %}';
+                        });
+                        } else {
+                            // Else if registration failed, display swal message showing errors
+                            if (data.field_errors) {
+                                if (data.field_errors.password2) {
+                                    // Specific error message for password2 
+                                    displayMessage('Error', data.field_errors.password2, 'error');
+                                } else if (data.field_errors.username) {
+                                    // Specific error message for username 
+                                    displayMessage('Error', data.field_errors.username, 'error');
+                                } else if (data.field_errors.email) {
+                                    // Specific error message for email 
+                                    displayMessage('Error', data.field_errors.email, 'error');
+                                } else {
+                                    // Else use a generic error message
+                                    displayMessage('Error', 'An error occurred during registration. Please try again.', 'error');
+                                }
+                            } else {
+                                // Also use generic error if no specified errors
+                                displayMessage('Error', 'An error occurred during registration. Please try again.', 'error');
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle AJAX errors, show a generic error message
+                        displayMessage('Error', 'An error occurred during registration. Please try again.', 'error');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "sweetalert2": "^11.7.27"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

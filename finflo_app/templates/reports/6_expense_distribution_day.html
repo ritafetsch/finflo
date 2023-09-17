@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Expense distribution by day of week chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div class="card-link">
+                    <div class="card mb-4">
+                        <div class="card-body d-flex flex-column flex-fill">
+                            <h5 class="card-title">Expense Distribution by Day of the Week</h5>
+                            <p class="card-text">Select Year: <input type="number" id="expenseDistributionByDayOfWeekPicker" min="YYYY" max="YYYY" step="1" placeholder="YYYY" value="2023" style="width: 160px;"></p>
+                            <canvas id="expenseDistributionByDayChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const expenseDistributionByDayOfWeekPicker = document.getElementById('expenseDistributionByDayOfWeekPicker');
+            const ctx = document.getElementById('expenseDistributionByDayChart');
+            const expenseDistributionByDayChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], 
+                    datasets: [{
+                        label: 'Expense Distribution by Day',
+                        data: [], 
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+            // Function to fetch and update data from backend
+            function fetchAndUpdateData(year) {
+                $.ajax({
+                    url: `/get_6_expense_distribution_day_data/${group_id}/${year}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        console.log('Response Data:', data);
+
+                        // Check if no data 
+                        const isAllZeroes = data.every(item => item.total_expense === 0);
+
+                        if (isAllZeroes) {
+                            // If no data display no data 
+                            expenseDistributionByDayChart.data.labels = ['No Data'];
+                            expenseDistributionByDayChart.data.datasets[0].data = [0];
+                        } else {
+                            // Else if data available, get datapoints per day of week
+                            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            const labels = data.map(item => dayNames[parseInt(item.day_of_week)]);
+                            const dataPoints = data.map(item => item.total_expense);
+
+                            // Update chart
+                            expenseDistributionByDayChart.data.labels = labels;
+                            expenseDistributionByDayChart.data.datasets[0].data = dataPoints;
+                        }
+
+                        expenseDistributionByDayChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+            
+            // Set initial picker value for current year
+            const currentYear = new Date().getFullYear();
+            expenseDistributionByDayOfWeekPicker.value = currentYear;
+            fetchAndUpdateData(currentYear);
+        
+            // If picker changes, get data for selected month and year
+            expenseDistributionByDayOfWeekPicker.addEventListener('change', function () {
+                const selectedYear = expenseDistributionByDayOfWeekPicker.value;
+                console.log('Selected Year:', selectedYear);
+                fetchAndUpdateData(selectedYear);
+            });
+        });
+    </script>
+    
+    
+    
+    
+</body>
+</html>

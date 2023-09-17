@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Join Group</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <!-- SweetAlert JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    <style>
+        /* Custom swal confirmation pop up styling */
+        .custom-swal-confirm {
+            width: 88%; 
+            background-color: #c3d7e9; 
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>   
+<body>
+    <!-- Join group component container -->
+    <div class="container mt-5">
+        <h1 class="display-4">Join an Existing Group</h1>
+        <!-- Form for entering group token -->
+        <form id="join-group-form" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="token">Token:</label>
+                <input type="text" class="form-control" name="token" id="token" required>
+            </div>
+            <button type="button" class="btn btn-primary" id="join-group-button" data-group-id="">Join Group</button>
+        </form>
+    </div>
+    
+
+    <script>
+        $(document).ready(function () {
+            // Upon form submission ('Join Group' click)
+            $('#join-group-button').click(function () {
+                var token = $('#token').val();
+                $.ajax({
+                    url: '/join_group_ajax/', 
+                    method: 'POST',
+                    data: { 'token': token, csrfmiddlewaretoken: '{{ csrf_token }}' },
+                    success: function (data) {
+                        if (data.success) {
+                            // If successful join, get new group id and name from response data
+                            var groupID = data.group_id; 
+                            var groupName = data.group_name;
+                            // Display swal success message with new group name
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'You have successfully joined the group: ' + groupName, 
+                                customClass: {
+                                    confirmButton: 'custom-swal-confirm' 
+                                }
+                            }).then(function () {
+                                // Redirect user to joined group dashboard 
+                                window.location.href = '/group_dashboard/' + groupID + '/';
+                            });
+                        } else {
+                            // Else trigger swal error message with error in text
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.error,
+                            });
+                        }
+                    },
+                    // If ajax error show swal error as well
+                    error: function (xhr, status, error) {
+                        console.log("AJAX Error:", error); 
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while joining the group.',
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

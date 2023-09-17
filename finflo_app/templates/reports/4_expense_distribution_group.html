@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Expense distribution by group memebers chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Expense Distribution by Group Members</h5>
+                            <p class="card-text">Select Month: <input type="month" id="expenseDistributionsByMemberPicker"></p>
+                            <canvas id="expenseDistributionChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const expenseDistributionsByMemberPicker = document.getElementById('expenseDistributionsByMemberPicker');
+            const ctx = document.getElementById('expenseDistributionChart');
+            const expenseDistributionChart = new Chart(ctx, {
+                type: 'bar',  
+                data: {
+                    labels: [], 
+                    datasets: [{
+                        label: 'Expense Distribution',
+                        data: [],   
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',  
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+            // Function to fetch and update data from backend
+            function fetchDataAndUpdateChart(year, month) {
+                $.ajax({
+                    url: `/get_4_expense_distribution_group_data/${group_id}/${year}/${month}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.length === 0) {
+                            // If no data get no data lables and use 0s
+                            expenseDistributionChart.data.labels = ['No Data'];
+                            expenseDistributionChart.data.datasets[0].data = [0];
+                        } else {
+                            // If data, update chart with data
+                            const labels = data.map(item => item.user); 
+                            const dataPoints = data.map(item => item.total_expense); 
+                            expenseDistributionChart.data.labels = labels;
+                            expenseDistributionChart.data.datasets[0].data = dataPoints;
+                        }
+                        expenseDistributionChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+
+            // Set initial picker value for current month and year
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            // Months are zero based - add one to get correct current month
+            const currentMonth = currentDate.getMonth() + 1; 
+            expenseDistributionsByMemberPicker.value = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+            // Fetch and update data for the default month and year
+            fetchDataAndUpdateChart(currentYear, currentMonth);
+
+            // If picker changes, get data for selected month and year
+            expenseDistributionsByMemberPicker.addEventListener('change', function () {
+                const selectedValue = expenseDistributionsByMemberPicker.value;
+                const [selectedYear, selectedMonth] = selectedValue.split('-');
+                fetchDataAndUpdateChart(selectedYear, selectedMonth);
+            });
+        });
+
+    </script>
+    
+    
+    
+</body>
+</html>

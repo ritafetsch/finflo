@@ -1,0 +1,477 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Group Reports</title>
+    <!-- Font awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Card display styling */
+        .card {
+            height: 100%;
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        /* Update size on boostrap font styling */
+        .custom-heading {
+            font-size: 2em; 
+        }
+        /* Card link animation */
+        .card-link {
+            text-decoration: none; 
+            color: inherit; 
+            transition: transform 0.3s ease-in-out; 
+            display: block; 
+        }
+        /* Hover effect for cards */
+        .card-link:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Nav section - same across all pages containing nav -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'group_dashboard' group_id=group_id %}">
+            <i class="fa-brands fa-codepen"></i>          
+            Finflo
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#expand-content" aria-controls="expand-content" aria-expanded="false" aria-label="Toggle navigation">
+            ☰
+        </button>
+        <div class="collapse navbar-collapse" id="expand-content">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'group_dashboard' group_id=group_id %}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'transactions' group_id=group_id %}">Transactions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'reports' group_id=group_id %}">Reports</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'groups' group_id=group_id %}">Groups</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'manage_categories' group_id=group_id %}">Categories</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa-solid fa-user"></i> 
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                        <a class="dropdown-item" href="{% url 'settings' group_id=group_id %}">Settings</a>
+                        <a class="dropdown-item" href="{% url 'logout' %}">Logout</a> 
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <!-- Container for all charts -->
+    <div class="container ">
+        <!-- Page - group heading -->
+        <h1 class="display-4 custom-heading mb-4 mt-3">Group Reports - <strong>{{ group.name }}</strong></h1>
+        <!-- FIRST ROW -->
+        <div class="row mb-3 mx-3"> 
+            <!-- Monthly expense trends chart template -->
+            <div class="col-md-4">
+                <a href="{% url '1_monthly_expense_trends' group_id=group_id %}" class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Monthly Expense Trends</h5>
+                            <canvas id="monthlyExpenseTrendsChart1" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Category expense trends chart template -->
+            <div class="col-md-4">
+                <a href="{% url '2_category_expense_trends' group_id=group_id %}" class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Expense Trends</h5>
+                            <canvas id="categoryExpensesChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Balance over time chart template -->
+            <div class="col-md-4">
+                <a href="{% url '3_balance_over_time' group_id=group_id %}"  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Yearly Balance</h5>
+                            <canvas id="balanceOverTimeChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div> <!-- End of row -->
+
+        <!-- SECOND ROW -->
+        <div class="row mb-3 mx-3"> 
+            <!-- Expense distriubtion by group members chart template -->
+            <div class="col-md-4">
+                <a href="{% url '4_expense_distribution_group' group_id=group_id %}"  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Expense Distribution by Group Members</h5>
+                            <canvas id="expenseDistributionChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Income distribution by group memebers chart template -->
+            <div class="col-md-4">
+                <a href="{% url '5_income_distribution_group' group_id=group_id %}"  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Income Distribution by Group Members</h5>
+                            <canvas id="incomeDistributionChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Expense distribution by day chart template -->
+            <div class="col-md-4">
+                <a href="{% url '6_expense_distribution_day' group_id=group_id %}" class="card-link">
+                    <div class="card mb-4">
+                        <div class="card-body d-flex flex-column flex-fill">
+                            <h5 class="card-title">Expense Distribution by Day of the Week</h5>
+                            <canvas id="expenseDistributionByDayChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div> <!-- End of row -->
+
+        <!-- THIRD ROW -->
+        <div class="row mb-3 mx-3"> 
+            <!-- Highest spending category chart template -->
+            <div class="col-md-4">
+                <a href="{% url '7_highest_spending_category' group_id=group_id %}"  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Highest Spending Category</h5>
+                            <canvas id="highestSpendingCategoryChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Income vs expesne over time chart template -->
+            <div class="col-md-4">
+                <a href="{% url '8_income_expense_time' group_id=group_id %}"  class="card-link">
+                    <div class="card mb-4">
+                        <div class="card-body d-flex flex-column flex-fill">
+                            <h5 class="card-title">Income vs. Expense Over Time</h5>
+                            <canvas id="totalIncomeVsExpensesChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <!-- Category wise monthly comparison chart tempalte -->
+            <div class="col-md-4">
+                <a href="{% url '9_category_wise_monthly' group_id=group_id %}"  class="card-link">
+                    <div class="card mb-4">
+                        <div class="card-body d-flex flex-column flex-fill">
+                            <h5 class="card-title">Category-wise Monthly Comparison</h5>
+                            <canvas id="categoryMonthlyComparisonChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div> <!-- End of row -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+        /* Convert JSON data from backend into JavaScript objects - one for each chart - these are all getting dummy 
+        data for the charts so that data is always being displayed, even if the user does not yet 
+        have any transaction data */
+        const monthlyExpenseData = JSON.parse('{{ monthly_expense_data|escapejs }}');
+        const categoryExpenseData = JSON.parse('{{ category_expense_data|escapejs }}');
+        const balanceOverTimeData = JSON.parse('{{ balance_over_time_data|escapejs }}');
+
+        const expenseDistributionByDayData = JSON.parse('{{ expense_distribution_by_day_data|escapejs }}');
+        const incomeDistributionData = JSON.parse('{{ income_distribution_data|escapejs }}');
+        const expenseDistributionData = JSON.parse('{{ expense_distribution_data|escapejs }}');
+
+        const highestSpendingCategoryData = JSON.parse('{{ highest_spending_category_for_year|escapejs }}');
+        const totalIncomeVsExpensesData = JSON.parse('{{ total_income_expense_data|escapejs }}');
+        const categoryMonthlyComparisonData = JSON.parse('{{ category_monthly_comparison_data|escapejs }}');
+  
+
+        // Function to create or get a chart by its id and populate it with data above
+        function createOrGetChart(chartId, chartData) {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            // Check if a chart with given id already exists
+            const existingChart = Chart.getChart(ctx);
+            // If existing chart is found, update its data
+            if (existingChart) {
+                existingChart.data = chartData.data;
+                existingChart.options = chartData.options;
+                existingChart.update();
+                return existingChart;
+            // Else if no existing chart, make new one
+            } else {
+                return new Chart(ctx, chartData);
+            }
+        }
+        // Populate monthly expense trends chart with dummy data and fine tune options
+        const monthlyExpenseChart = createOrGetChart('monthlyExpenseTrendsChart1', {
+            type: 'line',
+            data: {
+                labels: monthlyExpenseData.map(item => item.label),
+                datasets: [{
+                    label: 'Monthly Expenses',
+                    data: monthlyExpenseData.map(item => item.data),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    fill: true,
+                }],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        // Populate category expense chart with dummy data and fine tune options
+        createOrGetChart('categoryExpensesChart', {
+            type: 'bar',
+            data: {
+                labels: categoryExpenseData.map(item => item.label),
+                datasets: [{
+                    label: 'Category Expenses',
+                    data: categoryExpenseData.map(item => item.data),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        // Populate balance over time chart with dummy data and fine tune options
+        const balanceOverTimeChart = new Chart(document.getElementById('balanceOverTimeChart'), {
+            type: 'line',
+            data: {
+                labels: balanceOverTimeData.map(item => item.label),
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: balanceOverTimeData.map(item => item.income),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                    },
+                    {
+                        label: 'Expense',
+                        data: balanceOverTimeData.map(item => item.expense),
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                    },
+                    {
+                        label: 'Balance',
+                        data: balanceOverTimeData.map(item => item.balance),
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+        });
+        // Populate expense distrubution by group members chart with dummy data and fine tune options
+        createOrGetChart('expenseDistributionChart', {
+            type: 'bar', 
+            data: {
+                labels: expenseDistributionData.map(item => item.label),
+                datasets: [{
+                    label: 'Expense Distribution',
+                    data: expenseDistributionData.map(item => item.data),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',  
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                }],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        // Populate income distrubution by group members chart with dummy data and fine tune options
+        createOrGetChart('incomeDistributionChart', {
+            type: 'bar',  
+            data: {
+                labels: incomeDistributionData.map(item => item.label),
+                datasets: [{
+                    label: 'Income Distribution',
+                    data: incomeDistributionData.map(item => item.data),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',  
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                }],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        // Populate expense distrubution by day of week chart with dummy data and fine tune options
+        createOrGetChart('expenseDistributionByDayChart', {
+            type: 'bar',
+            data: {
+                labels: expenseDistributionByDayData.map(item => item.label),
+                datasets: [{
+                    label: 'Expense Distribution by Day',
+                    data: expenseDistributionByDayData.map(item => item.data),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',  
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Get random color for chart data color options
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+        // Populate category wise comparison chart with dummy data and fine tune options
+        createOrGetChart('categoryMonthlyComparisonChart', {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: categoryMonthlyComparisonData.map(item => ({
+                    label: item.label,
+                    data: item.data,
+                    borderColor: getRandomColor(),  
+                    borderWidth: 1,
+                    fill: false,
+                })),
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        // Populate total income vs expense chart with dummy data and fine tune options
+        createOrGetChart('totalIncomeVsExpensesChart', {
+            type: 'line',
+            data: {
+                labels: totalIncomeVsExpensesData.map(item => item.label),
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: totalIncomeVsExpensesData.map(item => item.income),
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                    },
+                    {
+                        label: 'Expenses',
+                        data: totalIncomeVsExpensesData.map(item => item.expense), 
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+        });
+        // Populate highest spending category chart with dummy data and fine tune options
+        const highestSpendingCategoryChart = new Chart(document.getElementById('highestSpendingCategoryChart'), {
+            type: 'line',
+            data: {
+                labels: highestSpendingCategoryData.map(item => item.label),
+                datasets: [{
+                    label: 'Highest Spending Category',
+                    data: highestSpendingCategoryData.map(item => item.amount),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointHoverBackgroundColor: 'rgba(75, 192, 192, 1)',
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                    },
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const index = context.dataIndex;
+                                return `Category: ${highestSpendingCategoryData[index].category}, Amount: $${context.parsed.y}`;
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    });
+    </script>   
+</body>
+</html>
+

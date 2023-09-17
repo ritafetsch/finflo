@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Highest spending category chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Highest Spending Category</h5>
+                            <p class="card-text">Select Year: <input type="number" id="highestSpendingCategoryPicker" min="YYYY" max="YYYY" step="1" placeholder="YYYY" value="2023" style="width: 160px;"></p>
+                            <canvas id="highestSpendingCategoryChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const highestSpendingCategoryPicker = document.getElementById('highestSpendingCategoryPicker');
+            const ctx = document.getElementById('highestSpendingCategoryChart');
+            const monthNames = [
+                'January', 'February', 'March', 'April',
+                'May', 'June', 'July', 'August',
+                'September', 'October', 'November', 'December'
+            ];
+            const highestSpendingCategoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthNames, 
+                    datasets: [{
+                        label: 'Highest Spending Category',
+                        data: [], 
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                        pointHoverBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const category = context.chart.data.labels[context.dataIndex];
+                                    const amount = context.parsed.y;
+                                    return `${category}: $${amount}`;
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            // Function to fetch and update data from backend
+            function fetchAndUpdateData(year) {
+                $.ajax({
+                    url: `/get_7_highest_spending_category_data/${group_id}/${year}`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        const categories = data.map(item => item.category);
+                        const dataPoints = Array.from({ length: 12 }, (_, index) => {
+                        const matchingMonth = data.find(item => item.month === (index + 1));
+                        return matchingMonth ? matchingMonth.highest_spending : 0;
+                    });
+
+                    // Update chart with fetched data
+                    highestSpendingCategoryChart.data.datasets[0].data = dataPoints;
+                    highestSpendingCategoryChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+    
+            // Set initial picker value for current year
+            const currentYear = new Date().getFullYear();
+            highestSpendingCategoryPicker.value = currentYear;
+            fetchAndUpdateData(currentYear);
+    
+            // If picker changes, get data for selected  year
+            highestSpendingCategoryPicker.addEventListener('change', function () {
+                const selectedYear = highestSpendingCategoryPicker.value;
+                console.log('Selected Year:', selectedYear);
+                fetchAndUpdateData(selectedYear);
+            });
+        });
+    </script>
+    
+    
+    
+</body>
+</html>

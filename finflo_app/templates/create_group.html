@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Group</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- SweetAlert CSS-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <!-- SweetAlert JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+</head>
+<body>
+    <!-- Create new group html container  -->
+    <div class="container mt-5">
+        <h1 class="display-4">Create a New Group</h1>
+        <!-- Form for getting user input for new group name  -->
+        <form method="post" id="create-group-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">Group Name:</label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <button type="submit" id="create-group-button" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Handle submission of form data for creating new group
+            const groupForm = document.getElementById('create-group-form');
+            groupForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                // Make call to create_group function on backend upon sumbit 
+                fetch('/create_group/', {
+                    method: 'POST',
+                    body: new FormData(groupForm),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest', 
+                        'X-CSRFToken': '{{ csrf_token }}', 
+                    },
+                })
+                .then((response) => response.json())
+                    .then((data) => {
+                        // If successful, display swal success message with fetched data
+                        if (data.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: data.message,
+                                allowOutsideClick: false, 
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // If confirmed, redirect to dashboard of new group
+                                    window.location.href = data.redirect_url;
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+    </script>
+</body>
+</html>

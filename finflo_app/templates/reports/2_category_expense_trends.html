@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Category expense trends chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+                <div class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Expense Trends</h5>
+                            <p class="card-text">Select Month and Year: <input type="month" id="categoryExpenseTrendsMonthPicker" style="width: 160px;"></p>
+                            <canvas id="categoryExpensesChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Define data for and initalize chart.js chart 
+            var group_id = {{ group_id }};
+            const categoryExpenseTrendsMonthPicker = document.getElementById('categoryExpenseTrendsMonthPicker');
+            const ctx = document.getElementById('categoryExpensesChart');
+
+            const categoryColors = [
+                // array of colors for category data
+                'rgba(26, 188, 156, 0.6)',
+                'rgba(41, 128, 185, 0.6)',
+                'rgba(46, 204, 113, 0.6)',
+                'rgba(142, 68, 173, 0.6)',
+                'rgba(230, 126, 34, 0.6)',
+                'rgba(192, 57, 43, 0.6)',
+                'rgba(52, 152, 219, 0.6)',
+                'rgba(155, 89, 182, 0.6)',
+                'rgba(241, 196, 15, 0.6)',
+                'rgba(244, 179, 80, 0.6)',  
+                'rgba(189, 195, 199, 0.6)', 
+                'rgba(230, 126, 34, 0.6)',  
+                'rgba(46, 204, 113, 0.6)',  
+                'rgba(231, 76, 60, 0.6)',   
+                'rgba(155, 89, 182, 0.6)',  
+                'rgba(52, 152, 219, 0.6)',  
+                'rgba(26, 188, 156, 0.6)',  
+                'rgba(41, 128, 185, 0.6)',  
+                'rgba(192, 57, 43, 0.6)',  
+            ];
+            const categoryExpenseChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],  
+                    datasets: [{
+                        label: 'Category Expenses',
+                        data: [],  
+                        backgroundColor: categoryColors,
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    legend: {
+                        display: false, 
+                    },
+                    scales: 
+                    {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label[context.dataIndex]; 
+                                    const dataPointValue = context.dataset.data[context.dataIndex];
+                                    return `${label}: ${dataPointValue}`;
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            // Function to fetch and update data from backend 
+            function fetchDataAndUpdateChart(year, month) {
+                $.ajax({
+                    url: `/get_2_monthly_category_expense_trends_data/${group_id}/${year}/${month}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                    if (data.length === 0) {
+                        // If no data, display no data indicators
+                        categoryExpenseChart.data.labels = ['No Data'];
+                        categoryExpenseChart.data.datasets[0].data = [0];
+                        categoryExpenseChart.data.datasets[0].label = ['No Data'];
+                        
+                    } else {
+                        // If data, set labels and data points
+                        const labels = data.map(item => item.category);
+                        const dataPoints = data.map(item => item.total_expense);
+                        const datasetLabels = data.map(item => item.category);
+                        categoryExpenseChart.data.labels = labels;
+                        categoryExpenseChart.data.datasets[0].data = dataPoints;
+                        categoryExpenseChart.data.datasets[0].label = datasetLabels;  
+                    }
+
+                    // Apply changes with fetched data
+                    categoryExpenseChart.update();
+                },
+                error: function (error) {
+                    console.error('Error fetching data:', error);
+                },
+                });
+            }
+    
+            // Set current data as default 
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // Note: Months are 0-based, so add 1
+            categoryExpenseTrendsMonthPicker.value = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+    
+            // Fetch and update data for default time
+            fetchDataAndUpdateChart(currentYear, currentMonth);
+    
+            // Check if picker changes and if so get data for changed time period 
+            categoryExpenseTrendsMonthPicker.addEventListener('change', function () {
+                const selectedValue = categoryExpenseTrendsMonthPicker.value;
+                const [selectedYear, selectedMonth] = selectedValue.split('-');
+                fetchDataAndUpdateChart(selectedYear, selectedMonth);
+            });
+        });
+    </script>
+    
+    
+    
+</body>
+</html>

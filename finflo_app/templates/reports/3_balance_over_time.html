@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Expense Trends</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+      <!-- Balance over time chart container-->
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12 mx-auto"> 
+               <div  class="card-link">
+                    <div class="card flex-fill">
+                        <div class="card-body">
+                            <h5 class="card-title">Yearly Balance</h5>
+                            <input type="number" id="balanceOverTimeYearPicker" min="YYYY" max="YYYY" step="1" placeholder="YYYY" style="width: 160px;">
+                            <canvas id="balanceOverTimeChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define data for and initalize chart.js chart 
+        document.addEventListener('DOMContentLoaded', function () {
+            var group_id = {{ group_id }};
+            const balanceOverTimeYearPicker = document.getElementById('balanceOverTimeYearPicker');
+            const ctx = document.getElementById('balanceOverTimeChart');
+            const balanceOverTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], 
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: [], 
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'Expense',
+                            data: [], 
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                        {
+                            label: 'Balance',
+                            data: [], 
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+
+            // Function to fetch and update data from backend 
+            function fetchAndUpdateData(year) {
+                $.ajax({
+                    url: `/get_3_balance_over_time_data/${group_id}/${year}/`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        // Get labels for months
+                        const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        if (data.length === 0) {
+                            // If no data fill data as 0 for income, expense and balance
+                            balanceOverTimeChart.data.labels = allMonths;
+                            balanceOverTimeChart.data.datasets[0].data = Array(12).fill(0);
+                            balanceOverTimeChart.data.datasets[1].data = Array(12).fill(0);
+                            balanceOverTimeChart.data.datasets[2].data = Array(12).fill(0);
+                        } else {
+                            // If data returned for selected year, update labels and data
+                            const labels = data.map(item => item.label);
+                            const incomeData = data.map(item => item.income);
+                            const expenseData = data.map(item => item.expenses);
+                            const balanceData = data.map(item => item.balance);
+
+                            balanceOverTimeChart.data.labels = allMonths;
+                            balanceOverTimeChart.data.datasets[0].data = allMonths.map(month => {
+                                const index = labels.indexOf(month);
+                                return index !== -1 ? incomeData[index] : 0;
+                            });
+                            balanceOverTimeChart.data.datasets[1].data = allMonths.map(month => {
+                                const index = labels.indexOf(month);
+                                return index !== -1 ? expenseData[index] : 0;
+                            });
+                            balanceOverTimeChart.data.datasets[2].data = allMonths.map(month => {
+                                const index = labels.indexOf(month);
+                                return index !== -1 ? balanceData[index] : 0;
+                            });
+                        }
+                        // Update chart
+                        balanceOverTimeChart.update();
+                    },
+                    error: function (error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            }
+            // Set initial picker value for current year
+            const currentYear = new Date().getFullYear();
+            balanceOverTimeYearPicker.value = currentYear;
+            // Set chart data for current year
+            fetchAndUpdateData(currentYear);
+
+            // If picker changes, get data for selected year
+            balanceOverTimeYearPicker.addEventListener('change', function () {
+                const selectedYear = balanceOverTimeYearPicker.value;
+                // Fetch and update data for the selected year
+                fetchAndUpdateData(selectedYear);
+            });
+        });
+    </script>
+
+</body>
+</html>

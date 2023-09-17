@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Landing Page</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <!-- SweetAlert JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+</head>
+<body>
+    <!-- Instructions to tell user to choose option -->
+    <div class="container mt-5" style="max-width: 800px; margin: 0 auto;">
+        <h1 class="display-4 custom-title ">Welcome to finflo, {{ request.user.first_name }}!</strong></h1>
+        <p class="text-muted">You are not currently a member of any groups. Please choose one of the options below to get started.</p>
+       
+       <!-- Create new group component - same as is handled on groups page -->
+        <div class="row mt-5" >
+            <div class="col-md-12">
+                <a href="{% url 'create_group' %}" class="card-link">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Create New Group Account</h5>
+                            <p class="card-text">
+                                Click here to proceed to create a new group account. You will be automatically assigned as the admin for this account. Upon successful completion, a unique token will be generated for this account, which you can share with anyone you'd like to grant access to. Be cautious when sharing this code.
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!-- Join existing group component - same as is handled on groups page -->
+        <div class="row">
+            <div class="col-md-12">
+                <a href="{% url 'join_group' %}" class="card-link">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Join Existing Group Account</h5>
+                            <p class="card-text">
+                                If you'd like to join an existing group account, you'll need an access token for the group. Please contact the group admin if you don't have access to this token.
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
