@@ -15,4 +15,5 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'finflo_project.settings')
 
 application = get_wsgi_application()
 
+# vercel config
 app = application
