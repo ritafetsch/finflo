@@ -5,7 +5,7 @@ def create_default_currencies(sender, **kwargs):
     from .models import Currency
     
     currencies_data = [
-        {'name': 'British Pound', 'code': 'GBP', 'symbol': '£', 'exchange_rate': 0.7180},  # Listed first to make it the default
+        {'name': 'British Pound', 'code': 'GBP', 'symbol': '£', 'exchange_rate': 0.7180},  
         {'name': 'Euro', 'code': 'EUR', 'symbol': '€', 'exchange_rate': 0.8500},
         {'name': 'US Dollar', 'code': 'USD', 'symbol': '$', 'exchange_rate': 1.0000},
         {'name': 'Japanese Yen', 'code': 'JPY', 'symbol': '¥', 'exchange_rate': 110.8800},
@@ -65,8 +65,8 @@ def create_default_categories(sender, **kwargs):
             {'name': 'Pets', 'color': '#228B22', 'is_default': True},
             {'name': 'Beauty', 'color': '#FF1493', 'is_default': True},
             {'name': 'Sports', 'color': '#800080', 'is_default': True},
-            {'name': 'Other', 'color': '#FFF094', 'is_default': True},
             {'name': 'Work', 'color': '#0003FF', 'is_default': True},
+            {'name': 'Other', 'color': '#FFF094', 'is_default': True},
         ]
         for default in defaults:
             Category.objects.get_or_create(
