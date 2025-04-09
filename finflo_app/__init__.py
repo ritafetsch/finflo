@@ -1,0 +1,1 @@
+default_app_config = 'finflo_app.apps.FinfloAppConfig'

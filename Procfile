@@ -1,0 +1,1 @@
+web: gunicorn finflo_project.wsgi:application --log-file -
