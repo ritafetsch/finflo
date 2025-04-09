@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: finflo
+    env: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn finflo_project.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: DJANGO_SETTINGS_MODULE
+        value: finflo_project.settings
+      - key: DEBUG
+        value: False
