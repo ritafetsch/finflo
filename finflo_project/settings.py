@@ -66,7 +66,7 @@ else:
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Application definition
 INSTALLED_APPS = [
@@ -118,7 +118,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'finflo_project.wsgi.application'
 
-
+# Production security settings
+if os.getenv('DEBUG', 'True') == 'False':
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 # Password validation
