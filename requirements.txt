@@ -14,3 +14,12 @@ sqlparse==0.4.4
 typing-extensions==4.13.1
 tzdata==2023.3
 whitenoise==6.7.0
+
+The view handling group creation (finflo_app/views.py - particularly the function/class for the /create_group/ endpoint)
+The model definition for your groups (finflo_app/models.py)
+The form used for group creation (likely finflo_app/forms.py)
+Any relevant templates (finflo_app/templates/finflo_app/create_group.html)
+The URL routing configuration (finflo_app/urls.py)
+More detailed error logs (if you can temporarily enable DEBUG=True)
+
+The 500 error is occurring specifically when you POST to /create_group/, so those files will help identify what's happening during group creation.
