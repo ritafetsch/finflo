@@ -8,3 +8,7 @@ db.sqlite3
 .env.example
 .vscode/
 venv/
+
+# Static files
+/static/
+staticfiles/
