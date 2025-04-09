@@ -243,6 +243,15 @@ def create_group(request):
     if request.method == 'POST':
         # Handle group creation from form data
         name = request.POST.get('name')
+        default_currency, created = Currency.objects.get_or_create(
+            currency_id=1,
+            defaults={
+                'name': 'British Pound',
+                'code': 'GBP',
+                'symbol': '£',
+                'exchange_rate': 0.77
+            }
+        )
         group = Group.objects.create(name=name)
         # Add user as member of group
         group.members.add(request.user)
@@ -254,8 +263,22 @@ def create_group(request):
             user_profile.default_group = group
             user_profile.save()
         user_profile.save()
+
+
+        # Ensure default categories exist
+        default_categories = Category.objects.filter(is_default=True)
+        if not default_categories.exists():
+            # If no default categories exist, create them
+            from finflo_app.apps import create_default_categories
+            create_default_categories(None)
+            default_categories = Category.objects.filter(is_default=True)
+        
+        # Initialize group with default categories
+        group.categories.set(default_categories)
+
+
         # Call function to initialize group with default categories
-        group.initialize_default_categories()
+        # group.initialize_default_categories()
         # If there are additional admins from form, add them
         selected_admins = request.POST.getlist('admins')
         group.admins.add(*selected_admins)
