@@ -19,6 +19,7 @@ urlpatterns = [
     path('groups/<int:group_id>/', views.groups, name='groups'),
     path('group/<int:group_id>/transactions/', views.transactions_view, name='transactions'),
     path('group/<int:group_id>/reports/', views.reports_view, name='reports'),
+    path('health-check/', views.health_check, name='health_check'),
     # Action urls
     path('logout/', views.custom_logout, name='logout'),  
     path('register_user/', views.register_user, name='register_user'),

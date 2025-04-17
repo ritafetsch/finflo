@@ -33,7 +33,9 @@ def user_has_group_token(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-
+def health_check(request):
+    return JsonResponse({'status': 'alive'})
+    
 # Reports page 
 @login_required
 @user_has_group_token
